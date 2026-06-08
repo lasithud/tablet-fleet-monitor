@@ -113,6 +113,19 @@ public class AgentService extends Service {
         }
     }
 
+    /** Read an HTTP response body fully into a UTF-8 string. */
+    private String readAll(HttpURLConnection conn) throws Exception {
+        try (InputStream is = conn.getInputStream();
+             ByteArrayOutputStream bos = new ByteArrayOutputStream()) {
+            byte[] buf = new byte[1024];
+            int n;
+            while ((n = is.read(buf)) != -1) {
+                bos.write(buf, 0, n);
+            }
+            return bos.toString("UTF-8");
+        }
+    }
+
     private void handleCommands(String resp) {
         try {
             JSONObject obj = new JSONObject(resp);
