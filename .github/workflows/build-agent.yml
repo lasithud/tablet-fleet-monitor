@@ -1,0 +1,48 @@
+name: Build FleetAgent APK
+
+# Builds the debug APK in the cloud so no Android tooling is needed locally.
+# Runs on every push that touches the agent, and can be triggered manually
+# from the Actions tab (Run workflow). Download the APK from the run's
+# "Artifacts" section.
+
+on:
+  push:
+    paths:
+      - 'fleet-agent/**'
+      - '.github/workflows/build-agent.yml'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install required SDK packages
+        run: sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
+
+      - name: Set up Gradle 8.7
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.7'
+
+      - name: Build debug APK
+        working-directory: fleet-agent
+        run: gradle assembleDebug --no-daemon --stacktrace
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: fleetagent-debug-apk
+          path: fleet-agent/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error

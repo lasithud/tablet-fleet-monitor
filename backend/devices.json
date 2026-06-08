@@ -1,0 +1,47 @@
+{
+  "devices": [
+    {
+      "id": "room-1",
+      "name": "Meeting Room 1",
+      "tailscaleIp": "100.119.152.12",
+      "lastKnownPort": 32969
+    },
+    {
+      "id": "room-2",
+      "name": "Meeting Room 2",
+      "tailscaleIp": "100.69.124.124",
+      "lastKnownPort": 5555
+    },
+    {
+      "id": "room-3",
+      "name": "Meeting Room 3",
+      "tailscaleIp": "100.x.x.x",
+      "lastKnownPort": null
+    },
+    {
+      "id": "room-4",
+      "name": "Meeting Room 4",
+      "tailscaleIp": "100.x.x.x",
+      "lastKnownPort": null
+    },
+    {
+      "id": "room-5",
+      "name": "Meeting Room 5",
+      "tailscaleIp": "100.x.x.x",
+      "lastKnownPort": null
+    },
+    {
+      "id": "room-6",
+      "name": "Meeting Room 6",
+      "tailscaleIp": "100.x.x.x",
+      "lastKnownPort": null
+    }
+  ],
+  "targetApp": "de.ozerov.fully",
+  "portScanRange": {
+    "start": 37000,
+    "end": 46000
+  },
+  "pollIntervalSeconds": 30,
+  "agentTimeoutSeconds": 90
+}

@@ -1,0 +1,17 @@
+{
+  "name": "tablet-fleet-monitor",
+  "version": "1.0.0",
+  "description": "Remotely monitor and control a fleet of meeting-room Android tablets over Tailscale + ADB.",
+  "private": true,
+  "scripts": {
+    "start": "node backend/server.js",
+    "backend": "node backend/server.js",
+    "frontend": "npm --prefix frontend run dev",
+    "install:frontend": "npm --prefix frontend install",
+    "postinstall": "npm --prefix frontend install"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "ws": "^8.18.0"
+  }
+}
