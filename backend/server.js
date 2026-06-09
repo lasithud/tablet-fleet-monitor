@@ -57,6 +57,22 @@ app.post('/api/devices/:id/launch-kiosk', async (req, res) => {
   res.status(result.ok ? 200 : 409).json(result);
 });
 
+// POST /api/devices/:id/screen-on — queue a wake-screen command for the agent
+app.post('/api/devices/:id/screen-on', (req, res) => {
+  const dev = deviceManager.get(req.params.id);
+  if (!dev) return res.status(404).json({ error: 'Unknown device' });
+  const result = deviceManager.wakeScreen(req.params.id);
+  res.status(result.ok ? 200 : 409).json(result);
+});
+
+// POST /api/devices/:id/brightness — set screen brightness (0-100) via the agent
+app.post('/api/devices/:id/brightness', (req, res) => {
+  const dev = deviceManager.get(req.params.id);
+  if (!dev) return res.status(404).json({ error: 'Unknown device' });
+  const result = deviceManager.setBrightness(req.params.id, req.body && req.body.level);
+  res.status(result.ok ? 200 : 400).json(result);
+});
+
 // POST /api/devices/:id/mirror — spawn scrcpy process
 app.post('/api/devices/:id/mirror', (req, res) => {
   const dev = deviceManager.get(req.params.id);
@@ -85,6 +101,17 @@ app.post('/api/devices/launch-kiosk-all', async (_req, res) => {
   res.json({ results });
 });
 
+// POST /api/devices/exit-kiosk-all — exit kiosk (go home) on all online devices
+app.post('/api/devices/exit-kiosk-all', (_req, res) => {
+  res.json(deviceManager.exitKioskAll());
+});
+
+// POST /api/devices/brightness-all — set brightness on all online devices (default 70)
+app.post('/api/devices/brightness-all', (req, res) => {
+  const level = req.body && req.body.level != null ? req.body.level : 70;
+  res.json(deviceManager.setBrightnessAll(level));
+});
+
 // ---------------------------------------------------------------------------
 // FleetAgent endpoints — the on-device APK phones home here.
 // These are the reliable, reboot-proof path (no adb, no Wireless Debugging).
@@ -93,9 +120,15 @@ app.post('/api/devices/launch-kiosk-all', async (_req, res) => {
 // POST /api/agent/heartbeat — device reports its current state.
 // Body: { id, foregroundApp, battery, screenOn }
 app.post('/api/agent/heartbeat', (req, res) => {
-  const { id, foregroundApp, battery, screenOn } = req.body || {};
+  const { id, foregroundApp, battery, screenOn, charging, brightness } = req.body || {};
   if (!id) return res.status(400).json({ error: 'Missing device id' });
-  const dev = deviceManager.recordHeartbeat(id, { foregroundApp, battery, screenOn });
+  const dev = deviceManager.recordHeartbeat(id, {
+    foregroundApp,
+    battery,
+    screenOn,
+    charging,
+    brightness,
+  });
   if (!dev) return res.status(404).json({ error: 'Unknown device id' });
   // Reply with any pending commands so the agent can act in the same round-trip.
   res.json({ ok: true, commands: deviceManager.drainCommands(id) });

@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useState } from 'react';
 
-// Minimal toast system (PRD §6.4). Avoids pulling in a full UI kit; renders a
-// fixed stack of dismissible notifications and exposes `useToast()`.
+// Toast system, B&W system styling: white surface, gray border, dark text, and
+// a small semantic dot — no colored backgrounds.
 
 const ToastContext = createContext(() => {});
 
@@ -9,11 +9,11 @@ export function useToast() {
   return useContext(ToastContext);
 }
 
-const STYLES = {
-  info: 'bg-slate-800 text-white',
-  success: 'bg-emerald-600 text-white',
-  warning: 'bg-amber-500 text-white',
-  error: 'bg-rose-600 text-white',
+const DOT = {
+  info: 'dot-info',
+  success: 'dot-success',
+  warning: 'dot-warning',
+  error: 'dot-error',
 };
 
 export function ToastProvider({ children }) {
@@ -23,12 +23,10 @@ export function ToastProvider({ children }) {
     setToasts((t) => t.filter((x) => x.id !== id));
   }, []);
 
-  // Stable id without Math.random — a monotonic counter on the setter.
   const push = useCallback(
     (message, type = 'info', ttl = 5000) => {
       setToasts((t) => {
         const id = (t.length ? t[t.length - 1].id : 0) + 1;
-        // Schedule auto-dismiss.
         setTimeout(() => dismiss(id), ttl);
         return [...t, { id, message, type }];
       });
@@ -44,9 +42,11 @@ export function ToastProvider({ children }) {
           <div
             key={t.id}
             onClick={() => dismiss(t.id)}
-            className={`pointer-events-auto cursor-pointer rounded-lg px-4 py-3 text-sm shadow-lg ${STYLES[t.type]}`}
+            className="alert pointer-events-auto cursor-pointer"
+            style={{ boxShadow: 'var(--shadow-lg)' }}
           >
-            {t.message}
+            <span className={`alert-dot dot ${DOT[t.type] || DOT.info}`} />
+            <div className="text-sm">{t.message}</div>
           </div>
         ))}
       </div>

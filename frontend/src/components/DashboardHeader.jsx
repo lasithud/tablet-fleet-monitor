@@ -1,11 +1,15 @@
-// Dashboard header: fleet summary counts + global controls (PRD §6.2 / §12).
+// Dark page-header block (B&W system) with fleet summary as label + dot + count,
+// followed by a white controls row.
 
-function Stat({ label, value, className }) {
+function MetaItem({ label, value, tone }) {
   return (
-    <span className={`inline-flex items-center gap-1 ${className}`}>
-      <span className="font-semibold">{value}</span>
-      <span className="text-slate-500">{label}</span>
-    </span>
+    <div className="page-header-meta-item">
+      <span className="lbl">{label}</span>
+      <span className="val">
+        {tone && <span className={`dot dot-lg dot-${tone}`} />}
+        {value}
+      </span>
+    </div>
   );
 }
 
@@ -16,73 +20,62 @@ export default function DashboardHeader({
   onToggleAutoRefresh,
   onRefreshAll,
   onLaunchKioskAll,
+  onKillAll,
+  onBrightness70,
   busy,
 }) {
   const total = devices.length;
   const online = devices.filter((d) => d.online).length;
-  const warning = devices.filter((d) => d.online && d.foregroundApp && !d.isOnKiosk).length;
+  const warning = devices.filter(
+    (d) => d.online && ((d.foregroundApp && !d.isOnKiosk) || d.screenOn === false)
+  ).length;
   const offline = total - online;
 
   return (
-    <header className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <span className="text-2xl">🖥️</span>
-          <div>
-            <h1 className="text-lg font-bold text-slate-800">
-              Meeting Room Tablet Monitor
-            </h1>
-            <div
-              className="flex items-center gap-1 text-xs"
-              title={wsConnected ? 'Live updates connected' : 'Reconnecting…'}
-            >
-              <span
-                className={`h-2 w-2 rounded-full ${
-                  wsConnected ? 'bg-emerald-500' : 'bg-rose-500'
-                }`}
-              />
-              <span className="text-slate-400">
-                {wsConnected ? 'Live' : 'Reconnecting…'}
-              </span>
-            </div>
-          </div>
+    <div className="space-y-3">
+      <header className="page-header">
+        <div className="page-header-badge">
+          <span className={`dot dot-${wsConnected ? 'success' : 'error'}`} />
+          {wsConnected ? 'Live' : 'Reconnecting…'}
         </div>
+        <h1>Meeting Room Tablet Monitor</h1>
+        <p>Remote monitoring and control of the meeting-room tablet fleet.</p>
 
-        <div className="flex flex-wrap items-center gap-2">
-          <label className="flex cursor-pointer items-center gap-2 text-sm text-slate-600">
-            <input
-              type="checkbox"
-              checked={autoRefresh}
-              onChange={onToggleAutoRefresh}
-              className="h-4 w-4 rounded border-slate-300"
-            />
-            Auto-refresh (30s)
-          </label>
-          <button
-            type="button"
-            onClick={onRefreshAll}
-            disabled={busy}
-            className="rounded-md bg-slate-100 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-200 disabled:opacity-50"
-          >
+        <div className="page-header-meta">
+          <MetaItem label="Devices" value={total} />
+          <MetaItem label="Online" value={online} tone="success" />
+          <MetaItem label="Warning" value={warning} tone="warning" />
+          <MetaItem label="Offline" value={offline} tone="error" />
+        </div>
+      </header>
+
+      <div className="flex flex-wrap items-center gap-3">
+        <label className="flex cursor-pointer items-center gap-2 text-sm text-secondary">
+          <input
+            type="checkbox"
+            checked={autoRefresh}
+            onChange={onToggleAutoRefresh}
+            className="h-4 w-4 accent-black"
+          />
+          Auto-refresh (30s)
+        </label>
+
+        <div className="ml-auto flex flex-wrap gap-2">
+          <button type="button" className="btn btn-soft btn-sm" onClick={onBrightness70} disabled={busy}>
+            <span aria-hidden>☀</span> Set 70% Brightness
+          </button>
+          <button type="button" className="btn btn-secondary btn-sm" onClick={onRefreshAll} disabled={busy}>
             Refresh All
           </button>
-          <button
-            type="button"
-            onClick={onLaunchKioskAll}
-            disabled={busy}
-            className="rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-indigo-500 disabled:opacity-50"
-          >
-            Launch Kiosk on All
+          <button type="button" className="btn btn-secondary btn-sm" onClick={onKillAll} disabled={busy}>
+            <span className="dot dot-error" />
+            Kill All
+          </button>
+          <button type="button" className="btn btn-primary btn-sm" onClick={onLaunchKioskAll} disabled={busy}>
+            Launch Office Optimizer on All
           </button>
         </div>
       </div>
-
-      <div className="mt-4 flex flex-wrap gap-x-5 gap-y-1 text-sm">
-        <Stat label="Devices" value={total} className="text-slate-700" />
-        <Stat label="Online" value={`✅ ${online}`} className="text-emerald-600" />
-        <Stat label="Warning" value={`⚠️ ${warning}`} className="text-amber-600" />
-        <Stat label="Offline" value={`🔴 ${offline}`} className="text-rose-600" />
-      </div>
-    </header>
+    </div>
   );
 }

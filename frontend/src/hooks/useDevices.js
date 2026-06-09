@@ -56,6 +56,15 @@ export function useDeviceActions() {
     onSettled: refetch,
   });
 
+  const screenOn = useMutation({
+    mutationFn: deviceApi.screenOn,
+    onSettled: refetch,
+  });
+
+  const setBrightness = useMutation({
+    mutationFn: ({ id, level }) => deviceApi.setBrightness(id, level),
+  });
+
   const mirror = useMutation({ mutationFn: deviceApi.mirror });
 
   const killForeground = useMutation({
@@ -73,15 +82,29 @@ export function useDeviceActions() {
     onSettled: refetch,
   });
 
+  const exitKioskAll = useMutation({
+    mutationFn: deviceApi.exitKioskAll,
+    onSettled: refetch,
+  });
+
+  const setBrightnessAll = useMutation({
+    mutationFn: (level) => deviceApi.setBrightnessAll(level),
+    onSettled: refetch,
+  });
+
   return {
     patchDevice,
     refetch,
     connect,
     refresh,
     launchKiosk,
+    screenOn,
+    setBrightness,
     mirror,
     killForeground,
     connectAll,
     launchKioskAll,
+    exitKioskAll,
+    setBrightnessAll,
   };
 }

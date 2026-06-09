@@ -40,6 +40,8 @@ class DeviceManager extends EventEmitter {
         lastHeartbeat: null,
         battery: null,
         screenOn: null,
+        charging: null,
+        brightness: null,
       });
     }
 
@@ -174,6 +176,11 @@ class DeviceManager extends EventEmitter {
       isOnKiosk: fg === this.targetApp,
       battery: typeof data.battery === 'number' ? data.battery : dev.battery,
       screenOn: typeof data.screenOn === 'boolean' ? data.screenOn : dev.screenOn,
+      charging: typeof data.charging === 'boolean' ? data.charging : dev.charging,
+      brightness:
+        typeof data.brightness === 'number' && data.brightness >= 0
+          ? data.brightness
+          : dev.brightness,
       lastHeartbeat: new Date().toISOString(),
     });
   }
@@ -249,6 +256,48 @@ class DeviceManager extends EventEmitter {
     }
 
     return { ok: queued, queued, targetApp: this.targetApp };
+  }
+
+  /** Queue a "wake the screen" command for the device's agent. */
+  wakeScreen(id) {
+    const dev = this.devices.get(id);
+    if (!dev) return { ok: false, error: 'Unknown device' };
+    const queued = this.enqueueCommand(id, 'screenOn');
+    return { ok: queued, queued };
+  }
+
+  /** Queue a set-brightness command (0–100) for the device's agent. */
+  setBrightness(id, level) {
+    const dev = this.devices.get(id);
+    if (!dev) return { ok: false, error: 'Unknown device' };
+    const pct = Math.max(0, Math.min(100, Math.round(Number(level))));
+    if (Number.isNaN(pct)) return { ok: false, error: 'Invalid level' };
+    const queued = this.enqueueCommand(id, `brightness:${pct}`);
+    return { ok: queued, queued, level: pct };
+  }
+
+  /** Set the same brightness (0–100) on every online device. */
+  setBrightnessAll(level) {
+    const pct = Math.max(0, Math.min(100, Math.round(Number(level))));
+    if (Number.isNaN(pct)) return { ok: false, error: 'Invalid level' };
+    const ids = this.getAll()
+      .filter((d) => d.online)
+      .map((d) => d.id);
+    ids.forEach((id) => this.enqueueCommand(id, `brightness:${pct}`));
+    return { ok: true, count: ids.length, level: pct, ids };
+  }
+
+  /**
+   * Exit the kiosk (send to home screen) on every online device — used for the
+   * "Kill All" wind-down. Non-root agents can't truly force-stop the app, so
+   * this backgrounds it by going to the launcher.
+   */
+  exitKioskAll() {
+    const ids = this.getAll()
+      .filter((d) => d.online)
+      .map((d) => d.id);
+    ids.forEach((id) => this.enqueueCommand(id, 'exitKiosk'));
+    return { ok: true, count: ids.length, ids };
   }
 
   /** Force-stop the current foreground app on a device. */

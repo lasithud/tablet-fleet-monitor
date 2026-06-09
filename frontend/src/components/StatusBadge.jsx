@@ -1,10 +1,10 @@
-// Small pill badges used across the device card.
+// Black & white status badges (Resolv design system): white pill, dot-colored
+// border, dark label, and a small semantic dot. Color appears ONLY in the dot.
 
-function Badge({ children, className }) {
+function Badge({ tone, children }) {
   return (
-    <span
-      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${className}`}
-    >
+    <span className={`badge border-${tone}`}>
+      <span className={`dot dot-${tone}`} />
       {children}
     </span>
   );
@@ -12,38 +12,19 @@ function Badge({ children, className }) {
 
 /**
  * App-status badge comparing the foreground app to the target kiosk package.
- * States (PRD §6.1): ✅ On Kiosk | ⚠️ Wrong App | ❓ Unknown
+ * Screen-off takes priority — a dark tablet isn't actively "on" the app.
  */
-export function AppStatusBadge({ device, targetApp }) {
-  if (!device.online || !device.foregroundApp) {
-    return <Badge className="bg-slate-200 text-slate-600">❓ Unknown</Badge>;
-  }
-  if (device.isOnKiosk) {
-    return <Badge className="bg-emerald-100 text-emerald-700">✅ On Kiosk</Badge>;
-  }
-  return (
-    <Badge className="bg-amber-100 text-amber-700" title={`Expected ${targetApp}`}>
-      ⚠️ Wrong App
-    </Badge>
-  );
+export function AppStatusBadge({ device }) {
+  if (!device.online) return <Badge tone="neutral">Unknown</Badge>;
+  if (device.screenOn === false) return <Badge tone="neutral">Screen Off</Badge>;
+  if (!device.foregroundApp) return <Badge tone="neutral">Unknown</Badge>;
+  if (device.isOnKiosk) return <Badge tone="success">On Office Optimizer</Badge>;
+  return <Badge tone="warning">Wrong App</Badge>;
 }
 
 /** Online / Offline indicator. */
 export function OnlineBadge({ online }) {
-  return online ? (
-    <Badge className="bg-emerald-100 text-emerald-700">● Online</Badge>
-  ) : (
-    <Badge className="bg-rose-100 text-rose-700">● Offline</Badge>
-  );
-}
-
-/** ADB connection indicator (green/red). */
-export function AdbBadge({ connected }) {
-  return connected ? (
-    <Badge className="bg-emerald-100 text-emerald-700">ADB ✅</Badge>
-  ) : (
-    <Badge className="bg-rose-100 text-rose-700">ADB ❌</Badge>
-  );
+  return online ? <Badge tone="success">Online</Badge> : <Badge tone="error">Offline</Badge>;
 }
 
 export default Badge;

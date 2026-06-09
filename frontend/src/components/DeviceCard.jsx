@@ -1,9 +1,11 @@
-import { AppStatusBadge, OnlineBadge, AdbBadge } from './StatusBadge';
+import { AppStatusBadge, OnlineBadge } from './StatusBadge';
 import ActionButtons from './ActionButtons';
+import BrightnessControl from './BrightnessControl';
 
 // Human-readable labels for known packages. Falls back to the raw package name.
 const APP_LABELS = {
-  'de.ozerov.fully': 'Fully Kiosk',
+  'de.ozerov.fully': 'Office Optimizer',
+  'com.fleetmonitor.agent': 'Fleet Agent',
   'com.android.chrome': 'Chrome',
   'com.sec.android.app.launcher': 'Home Screen',
   'com.google.android.apps.nexuslauncher': 'Home Screen',
@@ -27,61 +29,51 @@ function relativeTime(iso) {
 }
 
 /**
- * One card per device (PRD §6.1 / §12). The left accent bar encodes the
- * device's overall health at a glance: green=on kiosk, amber=wrong app,
- * red=offline.
+ * One card per device. Pure B&W surface — state is conveyed entirely by badges
+ * and small semantic dots, never by card color (per the design system).
  */
-export default function DeviceCard({ device, targetApp, actions }) {
+export default function DeviceCard({ device, actions }) {
   const wrongApp = device.online && device.foregroundApp && !device.isOnKiosk;
 
-  const accent = !device.online
-    ? 'border-l-rose-400'
-    : wrongApp
-      ? 'border-l-amber-400'
-      : 'border-l-emerald-400';
+  const batteryKnown = typeof device.battery === 'number' && device.battery >= 0;
 
   return (
-    <div
-      className={`flex flex-col gap-3 rounded-xl border border-l-4 ${accent} bg-white p-4 shadow-sm`}
-    >
-      {/* Header: name + room */}
-      <div className="flex items-start justify-between">
-        <div>
-          <h3 className="font-semibold text-slate-800">{device.name}</h3>
-          <p className="text-xs text-slate-400">{device.id}</p>
+    <div className="card flex flex-col gap-2 p-4">
+      {/* Header: name + id, online badge */}
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <h3 className="truncate text-sm font-semibold text-strong">{device.name}</h3>
+          <p className="font-mono text-xs text-muted">{device.id}</p>
         </div>
         <OnlineBadge online={device.online} />
       </div>
 
-      {/* Status badges */}
-      <div className="flex flex-wrap gap-2">
-        <AdbBadge connected={device.adbConnected} />
-        <AppStatusBadge device={device} targetApp={targetApp} />
-      </div>
+      <AppStatusBadge device={device} />
 
-      {/* Details */}
-      <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm">
-        <dt className="text-slate-400">App</dt>
-        <dd className={wrongApp ? 'font-medium text-amber-600' : 'text-slate-700'}>
-          {appLabel(device.foregroundApp)}
-        </dd>
+      {/* Compact details — App, Battery+power on one line, last seen */}
+      <dl className="kv">
+        <dt>App</dt>
+        <dd className={wrongApp ? 'font-medium text-strong' : ''}>{appLabel(device.foregroundApp)}</dd>
 
-        <dt className="text-slate-400">IP</dt>
-        <dd className="font-mono text-slate-600">{device.tailscaleIp}</dd>
-
-        <dt className="text-slate-400">Port</dt>
-        <dd className="font-mono text-slate-600">{device.adbPort ?? '—'}</dd>
-
-        {typeof device.battery === 'number' && (
+        {batteryKnown && (
           <>
-            <dt className="text-slate-400">Battery</dt>
-            <dd className="text-slate-600">{device.battery}%</dd>
+            <dt>Battery</dt>
+            <dd>
+              {typeof device.charging === 'boolean' && (
+                <span className={`dot dot-${device.charging ? 'success' : 'warning'}`} />
+              )}
+              {device.battery}%
+              {device.charging === true && ' · Charging'}
+              {device.charging === false && ' · On battery'}
+            </dd>
           </>
         )}
 
-        <dt className="text-slate-400">Checked</dt>
-        <dd className="text-slate-600">{relativeTime(device.lastChecked)}</dd>
+        <dt>Last seen</dt>
+        <dd>{relativeTime(device.lastHeartbeat || device.lastChecked)}</dd>
       </dl>
+
+      {device.online && <BrightnessControl device={device} actions={actions} />}
 
       <ActionButtons device={device} actions={actions} />
     </div>

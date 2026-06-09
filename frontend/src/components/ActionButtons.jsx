@@ -1,77 +1,60 @@
-// Per-device action buttons (PRD §6.3).
-// Each button reflects the pending state of its mutation so the admin gets
-// feedback while a port scan / launch / etc. is running.
+// Per-device actions. Only the *relevant* primary action is shown — Wake Screen
+// when the screen is off, Launch Office Optimizer when it's on — so the two are
+// mutually exclusive and the active one always reads as the bold primary.
 
-function ActionButton({ onClick, pending, disabled, variant = 'default', children }) {
-  const base =
-    'w-full rounded-md px-3 py-1.5 text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed';
-  const variants = {
-    default: 'bg-slate-100 text-slate-700 hover:bg-slate-200',
-    primary: 'bg-indigo-600 text-white hover:bg-indigo-500',
-    danger: 'bg-rose-100 text-rose-700 hover:bg-rose-200',
-  };
+function Btn({ onClick, pending, disabled, variant = 'soft', title, dot, sm, animate, children }) {
   return (
     <button
       type="button"
       onClick={onClick}
       disabled={disabled || pending}
-      className={`${base} ${variants[variant]}`}
+      title={title}
+      className={`btn btn-${variant} btn-block${sm ? ' btn-sm' : ''}${animate ? ' btn-pulse' : ''}`}
     >
+      {dot && <span className={`dot dot-${dot}`} />}
       {pending ? '…' : children}
     </button>
   );
 }
 
 export default function ActionButtons({ device, actions }) {
-  const { connect, refresh, launchKiosk, mirror, killForeground } = actions;
+  const { refresh, launchKiosk, screenOn } = actions;
   const id = device.id;
 
-  // True only while the mutation is in flight for *this* device.
   const isPending = (m) => m.isPending && m.variables === id;
-
-  const connected = device.adbConnected;
+  const screenOff = device.online && device.screenOn === false;
 
   return (
-    <div className="grid grid-cols-2 gap-2 pt-1">
-      <ActionButton
-        onClick={() => connect.mutate(id)}
-        pending={isPending(connect)}
-        variant="primary"
-      >
-        Reconnect ADB
-      </ActionButton>
+    <div className="flex flex-col gap-2 pt-1">
+      {screenOff ? (
+        <Btn
+          onClick={() => screenOn.mutate(id)}
+          pending={isPending(screenOn)}
+          disabled={!device.online}
+          variant="primary"
+          dot="warning"
+          sm
+          animate
+        >
+          Wake Screen
+        </Btn>
+      ) : (
+        <Btn
+          onClick={() => launchKiosk.mutate(id)}
+          pending={isPending(launchKiosk)}
+          disabled={!device.online || device.isOnKiosk}
+          title={device.isOnKiosk ? 'Already on Office Optimizer' : undefined}
+          variant="primary"
+          sm
+          animate
+        >
+          {device.isOnKiosk ? 'On Office Optimizer' : 'Launch Office Optimizer'}
+        </Btn>
+      )}
 
-      <ActionButton
-        onClick={() => refresh.mutate(id)}
-        pending={isPending(refresh)}
-      >
+      <Btn onClick={() => refresh.mutate(id)} pending={isPending(refresh)} variant="ghost" sm>
         Refresh
-      </ActionButton>
-
-      <ActionButton
-        onClick={() => launchKiosk.mutate(id)}
-        pending={isPending(launchKiosk)}
-        disabled={!connected}
-      >
-        Launch Kiosk
-      </ActionButton>
-
-      <ActionButton
-        onClick={() => mirror.mutate(id)}
-        pending={isPending(mirror)}
-        disabled={!connected}
-      >
-        Mirror Screen
-      </ActionButton>
-
-      <ActionButton
-        onClick={() => killForeground.mutate(id)}
-        pending={isPending(killForeground)}
-        disabled={!connected || !device.foregroundApp}
-        variant="danger"
-      >
-        Kill Foreground
-      </ActionButton>
+      </Btn>
     </div>
   );
 }

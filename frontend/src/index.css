@@ -2,13 +2,185 @@
 @tailwind components;
 @tailwind utilities;
 
-html,
-body,
-#root {
-  height: 100%;
+/* ─── Resolv Design System — Black & White (tokens) ─────────────────── */
+:root {
+  --white: #ffffff;
+  --gray-50: #fafafa; --gray-100: #f5f5f5; --gray-200: #e5e5e5; --gray-300: #d4d4d4;
+  --gray-400: #a3a3a3; --gray-500: #737373; --gray-600: #525252; --gray-700: #404040;
+  --gray-800: #262626; --gray-900: #171717; --black: #000000;
+
+  --bg: var(--white);
+  --bg-app: var(--gray-50);
+  --text: var(--gray-900);
+  --text-secondary: var(--gray-600);
+  --text-muted: var(--gray-400);
+  --border: var(--gray-200);
+  --border-strong: var(--gray-300);
+  --primary: var(--gray-900);
+  --primary-foreground: var(--white);
+  --hover: var(--gray-100);
+
+  /* Semantic — only as small dots, never fills or body text */
+  --dot-success: #15803d;
+  --dot-warning: #d97706;
+  --dot-error: #dc2626;
+  --dot-info: #2563eb;
+  --dot-neutral: var(--gray-400);
+
+  --radius-sm: 4px; --radius-md: 8px; --radius-lg: 12px; --radius-xl: 16px; --radius-full: 9999px;
+  --shadow-xs: 0 1px 2px rgba(0,0,0,.05);
+  --shadow-sm: 0 1px 3px rgba(0,0,0,.07), 0 1px 2px rgba(0,0,0,.05);
+  --shadow-md: 0 4px 6px rgba(0,0,0,.07), 0 2px 4px rgba(0,0,0,.04);
+  --shadow-lg: 0 10px 15px rgba(0,0,0,.07), 0 4px 6px rgba(0,0,0,.04);
+  --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
+html, body, #root { height: 100%; }
 body {
-  font-family:
-    ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-family: var(--font-family);
+  font-size: 14px;
+  line-height: 22px;
+  color: var(--text);
+  background: var(--bg-app);
+  -webkit-font-smoothing: antialiased;
 }
+
+/* ─── Text helpers ──────────────────────────────────────────────────── */
+.text-secondary { color: var(--text-secondary); }
+.text-muted { color: var(--text-muted); }
+.text-strong { color: var(--text); }
+.label-caps {
+  font-size: 11px; font-weight: 600; letter-spacing: 0.06em;
+  text-transform: uppercase; color: var(--text-muted);
+}
+
+/* ─── Dots (the only color) ─────────────────────────────────────────── */
+.dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+.dot-lg { width: 8px; height: 8px; }
+.dot-success { background: var(--dot-success); }
+.dot-warning { background: var(--dot-warning); }
+.dot-error { background: var(--dot-error); }
+.dot-info { background: var(--dot-info); }
+.dot-neutral { background: var(--dot-neutral); }
+
+/* ─── Buttons ───────────────────────────────────────────────────────── */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  font-family: inherit; font-size: 14px; font-weight: 500; line-height: 1;
+  padding: 8px 16px; border-radius: var(--radius-md); border: 1px solid transparent;
+  cursor: pointer; transition: background .15s, transform .1s, box-shadow .15s, border-color .15s;
+  white-space: nowrap; user-select: none;
+}
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+.btn:not(:disabled):active { transform: scale(.97); }
+.btn-block { width: 100%; }
+.btn-sm { padding: 6px 12px; font-size: 13px; }
+.btn .dot { width: 7px; height: 7px; }
+
+/* Attention pulse for the active primary action — soft expanding ring, no color.
+   Only animates while the button is enabled. */
+@keyframes btnPulse {
+  0% { box-shadow: 0 0 0 0 rgba(23, 23, 23, 0.35); }
+  70% { box-shadow: 0 0 0 7px rgba(23, 23, 23, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(23, 23, 23, 0); }
+}
+.btn-pulse:not(:disabled) { animation: btnPulse 1.8s ease-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .btn-pulse:not(:disabled) { animation: none; }
+}
+
+.btn-primary { background: var(--primary); color: var(--primary-foreground); }
+.btn-primary:not(:disabled):hover { background: var(--gray-800); }
+.btn-secondary { background: var(--white); color: var(--text); border-color: var(--border-strong); }
+.btn-secondary:not(:disabled):hover { background: var(--gray-50); }
+.btn-soft { background: var(--gray-100); color: var(--text); border-color: var(--gray-200); }
+.btn-soft:not(:disabled):hover { background: var(--gray-200); }
+.btn-ghost { background: transparent; color: var(--text-secondary); border-color: var(--border); }
+.btn-ghost:not(:disabled):hover { background: var(--gray-100); }
+
+/* ─── Badges (pill, white surface, dot + label, dot-colored border) ─── */
+.badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 11px; font-weight: 600; padding: 3px 10px;
+  border-radius: var(--radius-full); background: var(--white);
+  color: var(--gray-800); border: 1px solid var(--border-strong); white-space: nowrap;
+}
+.badge-plain { background: var(--gray-100); color: var(--gray-700); border-color: var(--gray-200); }
+.border-success { border-color: var(--dot-success); }
+.border-warning { border-color: var(--dot-warning); }
+.border-error { border-color: var(--dot-error); }
+.border-info { border-color: var(--dot-info); }
+.border-neutral { border-color: var(--border-strong); }
+
+/* ─── Card ──────────────────────────────────────────────────────────── */
+.card {
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); box-shadow: var(--shadow-sm);
+}
+
+/* ─── Page header (dark block) ──────────────────────────────────────── */
+.page-header {
+  background: var(--gray-900); border-radius: var(--radius-lg);
+  padding: 18px 22px; color: var(--white);
+}
+.page-header-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: rgba(255,255,255,.15); border-radius: var(--radius-full);
+  padding: 2px 10px; font-size: 11px; font-weight: 500; margin-bottom: 8px;
+}
+.page-header h1 { font-size: 20px; font-weight: 700; margin: 0 0 2px; }
+.page-header p { font-size: 12px; opacity: .8; max-width: 540px; }
+.page-header-meta {
+  display: flex; flex-wrap: wrap; gap: 24px; margin-top: 12px;
+  padding-top: 12px; border-top: 1px solid rgba(255,255,255,.2);
+}
+.page-header-meta-item { display: flex; flex-direction: column; gap: 4px; }
+.page-header-meta-item .lbl {
+  font-size: 11px; font-weight: 600; letter-spacing: .06em;
+  text-transform: uppercase; opacity: .55;
+}
+.page-header-meta-item .val { font-size: 17px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+
+/* In-header attention line — translucent pills on the dark surface */
+.page-header-alerts { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 12px; font-size: 12px; }
+.page-header-alerts .lead { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; }
+.ph-alert {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: rgba(255,255,255,.12); border-radius: var(--radius-full);
+  padding: 2px 10px; color: rgba(255,255,255,.92);
+}
+
+/* ─── Action center (collapsible task list) ────────────────────────── */
+.ac-toggle {
+  width: 100%; display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; padding: 12px 16px; background: transparent; border: none;
+  cursor: pointer; font-family: inherit; color: var(--text); border-radius: var(--radius-lg);
+}
+.ac-toggle:hover { background: var(--hover); }
+.ac-chevron { color: var(--text-muted); transition: transform .15s; font-size: 12px; }
+.ac-chevron.open { transform: rotate(90deg); }
+.ac-list { border-top: 1px solid var(--border); max-height: 240px; overflow-y: auto; }
+.ac-item {
+  display: flex; align-items: center; gap: 12px; padding: 11px 16px;
+  border-bottom: 1px solid var(--gray-100);
+}
+.ac-item:last-child { border-bottom: none; }
+.ac-item .ac-dot { margin-top: 1px; }
+.ac-item-text { flex: 1; min-width: 0; }
+.ac-item-title { font-size: 13px; font-weight: 600; color: var(--text); }
+.ac-item-advice { font-size: 12px; color: var(--text-secondary); }
+
+/* ─── Alert (neutral surface + dot) ─────────────────────────────────── */
+.alert {
+  display: flex; gap: 12px; padding: 16px; border-radius: var(--radius-md);
+  background: var(--white); border: 1px solid var(--border); color: var(--text);
+}
+.alert-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 6px; }
+
+/* ─── Definition list rows inside cards ─────────────────────────────── */
+.kv { display: grid; grid-template-columns: auto 1fr; gap: 3px 12px; font-size: 13px; }
+.kv dt { color: var(--text-muted); }
+.kv dd { color: var(--text-secondary); display: flex; align-items: center; gap: 6px; }
+
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-thumb { background: var(--gray-300); border-radius: var(--radius-full); }

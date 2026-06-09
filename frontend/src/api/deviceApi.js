@@ -32,10 +32,22 @@ export const deviceApi = {
   // Per-device actions
   connect: (id) => request(`/api/devices/${id}/connect`, { method: 'POST' }),
   launchKiosk: (id) => request(`/api/devices/${id}/launch-kiosk`, { method: 'POST' }),
+  screenOn: (id) => request(`/api/devices/${id}/screen-on`, { method: 'POST' }),
+  setBrightness: (id, level) =>
+    request(`/api/devices/${id}/brightness`, {
+      method: 'POST',
+      body: JSON.stringify({ level }),
+    }),
   mirror: (id) => request(`/api/devices/${id}/mirror`, { method: 'POST' }),
   killForeground: (id) => request(`/api/devices/${id}/kill-foreground`, { method: 'POST' }),
 
   // Fleet-wide actions
   connectAll: () => request('/api/devices/connect-all', { method: 'POST' }),
   launchKioskAll: () => request('/api/devices/launch-kiosk-all', { method: 'POST' }),
+  exitKioskAll: () => request('/api/devices/exit-kiosk-all', { method: 'POST' }),
+  setBrightnessAll: (level = 70) =>
+    request('/api/devices/brightness-all', {
+      method: 'POST',
+      body: JSON.stringify({ level }),
+    }),
 };
