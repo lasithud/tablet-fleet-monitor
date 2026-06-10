@@ -113,6 +113,8 @@ class DeviceManager extends EventEmitter {
     dev.lastChecked = new Date().toISOString();
 
     if (wasOnline && dev.online === false) {
+      // Drop any queued commands so stale actions don't fire when it returns.
+      this.commandQueues.set(id, []);
       this.emit('device:disconnected', { id });
     }
 

@@ -2,37 +2,37 @@
   "devices": [
     {
       "id": "room-1",
-      "name": "Meeting Room 1",
-      "tailscaleIp": "100.119.152.12",
-      "lastKnownPort": 32969
+      "name": "Earth Room",
+      "tailscaleIp": "100.67.112.98",
+      "lastKnownPort": 37013
     },
     {
       "id": "room-2",
-      "name": "Meeting Room 2",
+      "name": "Fire Room",
       "tailscaleIp": "100.69.124.124",
       "lastKnownPort": 5555
     },
     {
       "id": "room-3",
-      "name": "Meeting Room 3",
+      "name": "Main Boardroom",
       "tailscaleIp": "100.x.x.x",
       "lastKnownPort": null
     },
     {
       "id": "room-4",
-      "name": "Meeting Room 4",
+      "name": "Pod Air Room",
       "tailscaleIp": "100.x.x.x",
       "lastKnownPort": null
     },
     {
       "id": "room-5",
-      "name": "Meeting Room 5",
-      "tailscaleIp": "100.x.x.x",
+      "name": "Spirit Room",
+      "tailscaleIp": "100.119.152.12",
       "lastKnownPort": null
     },
     {
       "id": "room-6",
-      "name": "Meeting Room 6",
+      "name": "Pod Water Room",
       "tailscaleIp": "100.x.x.x",
       "lastKnownPort": null
     }
@@ -42,6 +42,6 @@
     "start": 37000,
     "end": 46000
   },
-  "pollIntervalSeconds": 30,
-  "agentTimeoutSeconds": 90
+  "pollIntervalSeconds": 15,
+  "agentTimeoutSeconds": 35
 }

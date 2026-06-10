@@ -73,7 +73,13 @@ public class MainActivity extends Activity {
         root.addView(button("3. Disable Battery Optimization", v ->
                 startActivity(new Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS))));
 
-        root.addView(button("4. Start Agent", v -> {
+        root.addView(button("4. Allow Modify System Settings (brightness)", v -> {
+            Intent i = new Intent(Settings.ACTION_MANAGE_WRITE_SETTINGS,
+                    Uri.parse("package:" + getPackageName()));
+            startActivity(i);
+        }));
+
+        root.addView(button("5. Start Agent", v -> {
             saveSettings();
             if (Config.getDeviceId(this).isEmpty()) {
                 toast("Set a Device ID first");
@@ -91,7 +97,7 @@ public class MainActivity extends Activity {
 
         status = new TextView(this);
         status.setPadding(0, pad, 0, 0);
-        status.setText("Set the Device ID, grant the 3 permissions, then Start Agent.");
+        status.setText("Set the Device ID, grant the permissions, then Start Agent.");
         root.addView(status);
 
         ScrollView sv = new ScrollView(this);

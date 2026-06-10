@@ -2,8 +2,24 @@
 
 const express = require('express');
 const http = require('http');
+const path = require('path');
+const fs = require('fs');
 const { WebSocketServer } = require('ws');
 const deviceManager = require('./deviceManager');
+
+// Built FleetAgent APK — served at /agent.apk so any tablet on the tailnet can
+// install it from a browser (no adb / same-subnet needed for provisioning).
+const APK_PATH = path.join(
+  __dirname,
+  '..',
+  'fleet-agent',
+  'app',
+  'build',
+  'outputs',
+  'apk',
+  'debug',
+  'app-debug.apk'
+);
 
 const PORT = process.env.PORT || 3001;
 
@@ -23,6 +39,14 @@ app.use((req, res, next) => {
 // ---------------------------------------------------------------------------
 // REST API
 // ---------------------------------------------------------------------------
+
+// GET /agent.apk — download the FleetAgent APK (for installing on a new tablet)
+app.get('/agent.apk', (_req, res) => {
+  if (!fs.existsSync(APK_PATH)) {
+    return res.status(404).send('APK not built yet — run the build, then retry.');
+  }
+  res.download(APK_PATH, 'fleet-agent.apk');
+});
 
 // GET /api/devices — config + current status of all devices
 app.get('/api/devices', (_req, res) => {
@@ -190,10 +214,13 @@ server.listen(PORT, () => {
   console.log(`[fleet-monitor] backend listening on http://localhost:${PORT}`);
   console.log(`[fleet-monitor] websocket on ws://localhost:${PORT}`);
 
-  // Attempt to connect every configured device on startup, then begin polling.
+  // Begin status polling immediately so offline detection isn't delayed by the
+  // (potentially slow) startup adb connect/scan.
+  startPolling();
+
+  // Attempt to connect adb-managed devices in the background (best effort).
   deviceManager
     .connectAll()
     .then(() => console.log('[fleet-monitor] initial connect-all complete'))
-    .catch((e) => console.error('[fleet-monitor] initial connect failed:', e.message))
-    .finally(startPolling);
+    .catch((e) => console.error('[fleet-monitor] initial connect failed:', e.message));
 });
