@@ -163,7 +163,7 @@ function Dashboard() {
           <div>
             <div className="font-semibold text-strong">Can’t reach the backend</div>
             <span className="text-secondary">
-              Is <code>node server.js</code> running on :3001? ({error.message})
+              The server may be starting up or unreachable. ({error.message})
             </span>
           </div>
         </div>

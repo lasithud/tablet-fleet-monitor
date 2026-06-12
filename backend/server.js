@@ -6,6 +6,11 @@ const path = require('path');
 const fs = require('fs');
 const { WebSocketServer } = require('ws');
 const deviceManager = require('./deviceManager');
+const { authEnabled, requireAuth, wsTokenValid } = require('./auth');
+
+// Built React dashboard (vite build output). Served from the same origin as the
+// API so the whole system is one deployable URL that any laptop can open.
+const FRONTEND_DIST = path.join(__dirname, '..', 'frontend', 'dist');
 
 // Built FleetAgent APK — served at /agent.apk so any tablet on the tailnet can
 // install it from a browser (no adb / same-subnet needed for provisioning).
@@ -26,15 +31,31 @@ const PORT = process.env.PORT || 3001;
 const app = express();
 app.use(express.json());
 
-// Permissive CORS — this server only listens locally and the dashboard runs on
-// the Vite dev origin (:5173). No auth in v1 (see PRD §13).
+// Permissive CORS — harmless when the dashboard is served same-origin, and lets
+// the Vite dev server (:5173) talk to a separate backend during development.
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
   res.header('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Content-Type');
+  res.header('Access-Control-Allow-Headers', 'Content-Type,Authorization,X-Fleet-Token');
   if (req.method === 'OPTIONS') return res.sendStatus(204);
   next();
 });
+
+// ---------------------------------------------------------------------------
+// Public endpoints (no token) — used before/without auth.
+// ---------------------------------------------------------------------------
+
+// GET /api/health — uptime/readiness probe.
+app.get('/api/health', (_req, res) => res.json({ ok: true }));
+
+// GET /api/public-config — tells the dashboard whether to show a login gate.
+app.get('/api/public-config', (_req, res) => res.json({ authRequired: authEnabled }));
+
+// ---------------------------------------------------------------------------
+// Everything below requires the shared token (no-op when FLEET_TOKEN is unset).
+// ---------------------------------------------------------------------------
+app.use('/api/devices', requireAuth);
+app.use('/api/agent', requireAuth);
 
 // ---------------------------------------------------------------------------
 // REST API
@@ -168,11 +189,27 @@ app.get('/api/agent/commands', (req, res) => {
 });
 
 // ---------------------------------------------------------------------------
+// Static dashboard — serve the built React app from the same origin, with a
+// SPA fallback so deep links work. Skipped gracefully if not built yet.
+// ---------------------------------------------------------------------------
+
+if (fs.existsSync(FRONTEND_DIST)) {
+  app.use(express.static(FRONTEND_DIST));
+  app.get('*', (req, res, next) => {
+    // Never swallow API/agent routes — let them 404 as JSON.
+    if (req.path.startsWith('/api') || req.path === '/agent.apk') return next();
+    res.sendFile(path.join(FRONTEND_DIST, 'index.html'));
+  });
+} else {
+  console.warn('[fleet-monitor] frontend/dist not found — run `npm run build` to serve the dashboard');
+}
+
+// ---------------------------------------------------------------------------
 // WebSocket — push live updates to connected dashboards
 // ---------------------------------------------------------------------------
 
 const server = http.createServer(app);
-const wss = new WebSocketServer({ server });
+const wss = new WebSocketServer({ server, path: '/ws' });
 
 /** Broadcast a typed event to every connected dashboard. */
 function broadcast(type, payload) {
@@ -188,7 +225,12 @@ deviceManager.on('device:connected', (d) => broadcast('device:connected', d));
 deviceManager.on('device:disconnected', (d) => broadcast('device:disconnected', d));
 deviceManager.on('adb:log', (line) => broadcast('adb:log', line));
 
-wss.on('connection', (ws) => {
+wss.on('connection', (ws, req) => {
+  // Reject dashboards that didn't present a valid token (?token=...).
+  if (!wsTokenValid(req)) {
+    ws.close(1008, 'Unauthorized');
+    return;
+  }
   // Send the current snapshot immediately so a fresh client isn't blank.
   ws.send(
     JSON.stringify({
@@ -212,7 +254,10 @@ function startPolling() {
 
 server.listen(PORT, () => {
   console.log(`[fleet-monitor] backend listening on http://localhost:${PORT}`);
-  console.log(`[fleet-monitor] websocket on ws://localhost:${PORT}`);
+  console.log(`[fleet-monitor] websocket on ws://localhost:${PORT}/ws`);
+  console.log(
+    `[fleet-monitor] auth: ${authEnabled ? 'ENABLED (FLEET_TOKEN set)' : 'DISABLED (set FLEET_TOKEN to require a token)'}`
+  );
 
   // Begin status polling immediately so offline detection isn't delayed by the
   // (potentially slow) startup adb connect/scan.

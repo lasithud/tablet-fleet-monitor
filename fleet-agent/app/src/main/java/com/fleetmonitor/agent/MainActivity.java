@@ -27,6 +27,7 @@ import android.widget.Toast;
 public class MainActivity extends Activity {
     private EditText serverEt;
     private EditText deviceEt;
+    private EditText tokenEt;
     private TextView status;
 
     @Override
@@ -55,6 +56,12 @@ public class MainActivity extends Activity {
         deviceEt.setText(Config.getDeviceId(this));
         deviceEt.setSingleLine(true);
         root.addView(deviceEt);
+
+        root.addView(label("Access token (match backend FLEET_TOKEN; blank if none)"));
+        tokenEt = new EditText(this);
+        tokenEt.setText(Config.getToken(this));
+        tokenEt.setSingleLine(true);
+        root.addView(tokenEt);
 
         root.addView(button("Save settings", v -> {
             saveSettings();
@@ -113,7 +120,8 @@ public class MainActivity extends Activity {
     private void saveSettings() {
         Config.save(this,
                 serverEt.getText().toString().trim(),
-                deviceEt.getText().toString().trim());
+                deviceEt.getText().toString().trim(),
+                tokenEt.getText().toString().trim());
     }
 
     private TextView label(String text) {

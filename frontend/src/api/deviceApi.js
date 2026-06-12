@@ -1,13 +1,32 @@
 // Thin REST client for the fleet-monitor backend.
-// The base URL is configurable via VITE_API_BASE for non-localhost setups.
+//
+// Defaults to the SAME ORIGIN the dashboard is served from, so the hosted
+// deployment needs zero per-laptop config — any browser that opens the URL just
+// works. For local development against a separate backend, override with
+// VITE_API_BASE / VITE_WS_URL in frontend/.env.
 
-const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:3001';
+import { getToken } from './auth';
 
-export const WS_URL = import.meta.env.VITE_WS_URL || 'ws://localhost:3001';
+const API_BASE = import.meta.env.VITE_API_BASE ?? '';
+
+// WebSocket base: explicit override, else derive ws(s):// from the current page.
+const WS_BASE =
+  import.meta.env.VITE_WS_URL ||
+  `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}`;
+
+/** WebSocket URL including the auth token (browsers can't set WS headers). */
+export function getWsUrl() {
+  const token = getToken();
+  return `${WS_BASE}/ws${token ? `?token=${encodeURIComponent(token)}` : ''}`;
+}
 
 async function request(path, options = {}) {
+  const token = getToken();
   const res = await fetch(`${API_BASE}${path}`, {
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
     ...options,
   });
   if (!res.ok) {
@@ -17,10 +36,15 @@ async function request(path, options = {}) {
     } catch {
       /* non-JSON body */
     }
-    throw new Error(detail || `${res.status} ${res.statusText}`);
+    const err = new Error(detail || `${res.status} ${res.statusText}`);
+    err.status = res.status;
+    throw err;
   }
   return res.json();
 }
+
+/** Unauthenticated: does this backend require a token? */
+export const fetchPublicConfig = () => request('/api/public-config');
 
 export const deviceApi = {
   // GET config + status of all devices

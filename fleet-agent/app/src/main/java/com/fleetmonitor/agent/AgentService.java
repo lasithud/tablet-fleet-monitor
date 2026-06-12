@@ -114,6 +114,7 @@ public class AgentService extends Service {
             conn.setConnectTimeout(8000);
             conn.setReadTimeout(8000);
             conn.setRequestMethod("GET");
+            addAuth(conn);
             int code = conn.getResponseCode();
             if (code >= 200 && code < 300) {
                 handleCommands(readAll(conn));
@@ -146,6 +147,7 @@ public class AgentService extends Service {
             conn.setRequestMethod("POST");
             conn.setDoOutput(true);
             conn.setRequestProperty("Content-Type", "application/json");
+            addAuth(conn);
             try (OutputStream os = conn.getOutputStream()) {
                 os.write(body.toString().getBytes(StandardCharsets.UTF_8));
             }
@@ -157,6 +159,14 @@ public class AgentService extends Service {
             }
         } finally {
             conn.disconnect();
+        }
+    }
+
+    /** Attach the shared access token (if configured) so the backend accepts us. */
+    private void addAuth(HttpURLConnection conn) {
+        String token = Config.getToken(this);
+        if (token != null && !token.isEmpty()) {
+            conn.setRequestProperty("X-Fleet-Token", token);
         }
     }
 

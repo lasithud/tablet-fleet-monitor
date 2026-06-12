@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { WS_URL } from '../api/deviceApi';
+import { getWsUrl } from '../api/deviceApi';
 
 /**
  * Maintains a resilient WebSocket connection to the backend and surfaces the
@@ -22,7 +22,7 @@ export function useWebSocket(onEvent) {
   onEventRef.current = onEvent;
 
   const connect = useCallback(() => {
-    const ws = new WebSocket(WS_URL);
+    const ws = new WebSocket(getWsUrl());
     wsRef.current = ws;
 
     ws.onopen = () => setConnected(true);

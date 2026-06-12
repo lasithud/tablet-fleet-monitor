@@ -17,8 +17,10 @@ no random ports, no pairing, no Fully Plus, no root, no watermarks. The tablet
 - `POST {serverUrl}/api/agent/heartbeat` → `{ id, foregroundApp, battery, screenOn }`
 - The backend replies with `{ commands: [...] }`, which the agent executes.
 
-Default `serverUrl` is `http://100.95.41.13:3001` (your backend's Tailscale IP),
-editable on the app's setup screen.
+`serverUrl` is editable on the app's setup screen — point it at your hosted
+backend (e.g. `https://your-app.up.railway.app`) or a Tailscale IP. If the
+backend has a `FLEET_TOKEN` set, also fill in the **Access token** field with the
+same value; the agent sends it as an `X-Fleet-Token` header on every call.
 
 ---
 
@@ -51,7 +53,7 @@ gradlew.bat assembleDebug    # Windows
 1. Copy `app-debug.apk` to the tablet (USB, Tailscale `file cp`, cloud, etc.).
 2. Tap it to install — allow **"Install unknown apps"** for the file manager if prompted.
 3. Open **Fleet Agent** and:
-   - Set **Server URL** (default should be correct) and **Device ID** = `room-1`, `room-2`, … (must match `devices.json`).
+   - Set **Server URL** (your hosted/Tailscale backend), **Device ID** = `room-1`, `room-2`, … (must match `devices.json`), and **Access token** (the backend's `FLEET_TOKEN`, if set).
    - Tap **Save settings**.
    - **1. Grant Usage Access** → enable Fleet Agent in the list.
    - **2. Allow Display Over Other Apps** → enable (lets the agent launch Fully from the background).
@@ -75,5 +77,5 @@ All three permissions persist across reboots, and the boot receiver restarts the
 
 - **Android 14 (API 34):** starting a `dataSync` foreground service from BOOT_COMPLETED is allowed, but some OEM builds are stricter. The battery-optimization exemption (step 3) gives the agent the leeway it needs. If a device ever doesn't auto-start after a reboot, opening the app once starts it. (The Tab A9 typically ships on Android 13, where this is unrestricted.)
 - **Heartbeat interval** is 30s (`INTERVAL_MS` in `AgentService.java`); the backend treats a device as offline after 90s of silence (`agentTimeoutSeconds` in `devices.json`).
-- **Security:** the backend has no auth (v1) and trusts the `id` in the heartbeat. That's fine on a private tailnet; don't expose the backend publicly.
+- **Security:** when `FLEET_TOKEN` is set, the backend rejects heartbeats and dashboard calls without the matching token — so it's safe to expose the hosted URL publicly. Without a token it trusts the `id` in the heartbeat (fine only on a private tailnet). Always set `FLEET_TOKEN` on a public host.
 - The agent only launches `de.ozerov.fully`. To control other packages, extend `handleCommands()` and add backend commands.

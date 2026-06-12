@@ -54,13 +54,23 @@ class DeviceManager extends EventEmitter {
     return JSON.parse(raw);
   }
 
-  /** Persist updated lastKnownPort values back to devices.json. */
+  /**
+   * Persist updated lastKnownPort values back to devices.json.
+   *
+   * This is a best-effort cache only (adb port reuse). On a hosted/ephemeral
+   * filesystem the write may fail or be read-only — never let that crash the
+   * server, since ports are re-discovered on demand anyway.
+   */
   _saveConfig() {
     for (const d of this.config.devices) {
       const dev = this.devices.get(d.id);
       if (dev) d.lastKnownPort = dev.adbPort;
     }
-    fs.writeFileSync(CONFIG_PATH, JSON.stringify(this.config, null, 2) + '\n', 'utf8');
+    try {
+      fs.writeFileSync(CONFIG_PATH, JSON.stringify(this.config, null, 2) + '\n', 'utf8');
+    } catch (e) {
+      this.emit('adb:log', `could not persist devices.json (non-fatal): ${e.message}`);
+    }
   }
 
   get targetApp() {

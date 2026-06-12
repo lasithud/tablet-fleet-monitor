@@ -12,9 +12,13 @@ public final class Config {
     private static final String PREFS = "fleet_agent_prefs";
     private static final String KEY_SERVER = "serverUrl";
     private static final String KEY_DEVICE = "deviceId";
+    private static final String KEY_TOKEN = "token";
 
-    /** Default backend (the always-on machine's Tailscale IP). Editable in-app. */
-    public static final String DEFAULT_SERVER = "http://100.95.41.13:3001";
+    /**
+     * Default backend. Point this at your hosted URL (e.g.
+     * https://your-app.up.railway.app) or a Tailscale IP. Editable in-app.
+     */
+    public static final String DEFAULT_SERVER = "https://your-app.up.railway.app";
 
     private Config() {}
 
@@ -30,10 +34,16 @@ public final class Config {
         return prefs(c).getString(KEY_DEVICE, "");
     }
 
-    public static void save(Context c, String serverUrl, String deviceId) {
+    /** Shared access token (matches the backend's FLEET_TOKEN). Empty if unused. */
+    public static String getToken(Context c) {
+        return prefs(c).getString(KEY_TOKEN, "");
+    }
+
+    public static void save(Context c, String serverUrl, String deviceId, String token) {
         prefs(c).edit()
                 .putString(KEY_SERVER, serverUrl)
                 .putString(KEY_DEVICE, deviceId)
+                .putString(KEY_TOKEN, token)
                 .apply();
     }
 }

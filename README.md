@@ -102,18 +102,51 @@ status every 30 seconds.
 
 ### Environment overrides
 
-| Variable     | Default     | Purpose                                   |
-| ------------ | ----------- | ----------------------------------------- |
-| `PORT`       | `3001`      | Backend HTTP/WS port                      |
-| `ADB_BIN`    | `adb`       | Path to the `adb` binary                  |
-| `SCRCPY_BIN` | `scrcpy`    | Path to the `scrcpy` binary               |
+| Variable      | Default     | Purpose                                                  |
+| ------------- | ----------- | -------------------------------------------------------- |
+| `PORT`        | `3001`      | Backend HTTP/WS port (Railway injects this)              |
+| `FLEET_TOKEN` | _(unset)_   | Shared access token. When set, the dashboard and agent endpoints require it. Leave unset for local dev (auth disabled). |
+| `ADB_BIN`     | `adb`       | Path to the `adb` binary (local control path only)       |
+| `SCRCPY_BIN`  | `scrcpy`    | Path to the `scrcpy` binary (local control path only)    |
 
-Frontend (set in `frontend/.env`):
+Frontend (set in `frontend/.env`, only for split dev setups — the hosted build
+talks to its own origin and needs neither):
 
-| Variable        | Default                 | Purpose            |
-| --------------- | ----------------------- | ------------------ |
-| `VITE_API_BASE` | `http://localhost:3001` | Backend REST base  |
-| `VITE_WS_URL`   | `ws://localhost:3001`   | Backend WebSocket  |
+| Variable        | Default       | Purpose                                |
+| --------------- | ------------- | -------------------------------------- |
+| `VITE_API_BASE` | _(same origin)_ | Backend REST base                    |
+| `VITE_WS_URL`   | _(same origin)_ | Backend WebSocket base               |
+
+---
+
+## Deploy to the cloud (Railway, free) + multiple laptops
+
+The system has two control paths. Only the first runs in the cloud:
+
+| Path | What it does | Cloud? |
+| ---- | ------------ | ------ |
+| **FleetAgent (phone-home)** — heartbeat + commands (`launchKiosk`, `screenOn`, `brightness`, `exitKiosk`), battery/foreground/screen status | tablet calls the server outbound | ✅ yes |
+| **ADB / scrcpy** — live screen mirroring, adb force-stop, port scan | backend shells out to local binaries on the tailnet | ❌ local only |
+
+Hosting the backend in the cloud gives you **multi-laptop control for free**: the
+server holds all state centrally and broadcasts to every connected dashboard, so
+any laptop that opens the URL and enters the access code can monitor and control
+the fleet. (Live screen-mirroring still requires running the server locally with
+`adb`/`scrcpy` on the tailnet — it can't run on a cloud host.)
+
+### One-time deploy
+
+1. Push this repo to GitHub.
+2. On [railway.app](https://railway.app) → **New Project → Deploy from GitHub repo** → pick this repo. Railway reads [`railway.json`](railway.json): it runs `npm run build` (builds the React app) then `npm start` (serves API + dashboard from one port).
+3. In the service's **Variables**, set `FLEET_TOKEN` to a strong secret (e.g. `openssl rand -hex 24`). Don't set `PORT` — Railway injects it.
+4. Under **Settings → Networking**, **Generate Domain**. That `https://<name>.up.railway.app` URL is your dashboard — open it from any laptop and enter the token.
+
+### Point the tablets at it
+
+In each tablet's **Fleet Agent** app, set **Server URL** to the Railway `https://…` URL and **Access token** to the same `FLEET_TOKEN`, then Save. Within one heartbeat the device appears online on the hosted dashboard. (Rebuild/reinstall the APK first if your installed copy predates the token field — see `fleet-agent/README.md`.)
+
+> The free tier sleeps after ~15 min of no traffic, but the tablets' ~30s
+> heartbeats keep it awake whenever at least one tablet is on.
 
 ---
 
@@ -172,7 +205,7 @@ completes in a few seconds over Tailscale.
 
 ## Notes / scope (v1)
 
-- No authentication, multi-user, scheduling, or history persistence (per PRD §13).
+- Auth is a single shared token (`FLEET_TOKEN`); no per-user accounts, scheduling, or history persistence (per PRD §13). Leaving `FLEET_TOKEN` unset disables auth for local use.
 - `scrcpy` opens a **native window on the backend host**, not in the browser —
   the admin views it where the server runs (or via a remote desktop to it).
 - UI is built with Tailwind + a few small in-repo components rather than a full
