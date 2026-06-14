@@ -43,5 +43,5 @@
     "end": 46000
   },
   "pollIntervalSeconds": 15,
-  "agentTimeoutSeconds": 35
+  "agentTimeoutSeconds": 60
 }
