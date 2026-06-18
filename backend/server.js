@@ -12,9 +12,11 @@ const { authEnabled, requireAuth, wsTokenValid } = require('./auth');
 // API so the whole system is one deployable URL that any laptop can open.
 const FRONTEND_DIST = path.join(__dirname, '..', 'frontend', 'dist');
 
-// Built FleetAgent APK — served at /agent.apk so any tablet on the tailnet can
-// install it from a browser (no adb / same-subnet needed for provisioning).
-const APK_PATH = path.join(
+// FleetAgent APK — served at /agent.apk so any tablet can install it from a
+// browser (no adb needed for provisioning). Prefer a fresh local Gradle build
+// output; fall back to the committed prebuilt copy (used on Railway, which
+// doesn't build the Android APK).
+const APK_BUILD_PATH = path.join(
   __dirname,
   '..',
   'fleet-agent',
@@ -25,6 +27,10 @@ const APK_PATH = path.join(
   'debug',
   'app-debug.apk'
 );
+const APK_PREBUILT_PATH = path.join(__dirname, '..', 'fleet-agent', 'prebuilt', 'app-debug.apk');
+function apkPath() {
+  return fs.existsSync(APK_BUILD_PATH) ? APK_BUILD_PATH : APK_PREBUILT_PATH;
+}
 
 const PORT = process.env.PORT || 3001;
 
@@ -63,10 +69,11 @@ app.use('/api/agent', requireAuth);
 
 // GET /agent.apk — download the FleetAgent APK (for installing on a new tablet)
 app.get('/agent.apk', (_req, res) => {
-  if (!fs.existsSync(APK_PATH)) {
-    return res.status(404).send('APK not built yet — run the build, then retry.');
+  const apk = apkPath();
+  if (!fs.existsSync(apk)) {
+    return res.status(404).send('APK not available — build it and commit fleet-agent/prebuilt/app-debug.apk.');
   }
-  res.download(APK_PATH, 'fleet-agent.apk');
+  res.download(apk, 'fleet-agent.apk');
 });
 
 // GET /api/devices — config + current status of all devices
