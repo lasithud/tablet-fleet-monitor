@@ -14,6 +14,7 @@ function Dashboard() {
   const { data, isLoading, error } = useDevices(30, autoRefresh);
 
   const targetApp = data?.targetApp || 'de.ozerov.fully';
+  const autoRelaunch = data?.autoRelaunch ?? true;
 
   // Per-device previous state, to detect the edges we alert on.
   const prev = useRef({}); // id -> { online, wrongApp, charging }
@@ -26,6 +27,10 @@ function Dashboard() {
 
   // Live WebSocket updates: patch the React Query cache and fire edge alerts.
   const { connected: wsConnected } = useWebSocket((evt) => {
+    if (evt.type === 'autoRelaunch') {
+      actions.patchAutoRelaunch(evt.payload);
+      return;
+    }
     if (evt.type !== 'device:status') return;
     const d = evt.payload;
     actions.patchDevice(d);
@@ -101,6 +106,21 @@ function Dashboard() {
     toast('Refreshing all devices…', 'info', 2000);
   };
 
+  const handleToggleAutoRelaunch = async () => {
+    const next = !autoRelaunch;
+    try {
+      await actions.setAutoRelaunch.mutateAsync(next);
+      toast(
+        next
+          ? 'Auto-relaunch ON — tablets off Office Optimizer will be reloaded'
+          : 'Auto-relaunch paused — tablets won’t be auto-reloaded',
+        next ? 'success' : 'warning'
+      );
+    } catch (e) {
+      toast(`Couldn’t change auto-relaunch: ${e.message}`, 'error');
+    }
+  };
+
   const handleLaunchKioskAll = async () => {
     try {
       const { results } = await actions.launchKioskAll.mutateAsync();
@@ -146,6 +166,8 @@ function Dashboard() {
         wsConnected={wsConnected}
         autoRefresh={autoRefresh}
         onToggleAutoRefresh={() => setAutoRefresh((v) => !v)}
+        autoRelaunch={autoRelaunch}
+        onToggleAutoRelaunch={handleToggleAutoRelaunch}
         onRefreshAll={handleRefreshAll}
         onLaunchKioskAll={handleLaunchKioskAll}
         onKillAll={handleKillAll}

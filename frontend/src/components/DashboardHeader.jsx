@@ -18,6 +18,8 @@ export default function DashboardHeader({
   wsConnected,
   autoRefresh,
   onToggleAutoRefresh,
+  autoRelaunch,
+  onToggleAutoRelaunch,
   onRefreshAll,
   onLaunchKioskAll,
   onKillAll,
@@ -58,6 +60,20 @@ export default function DashboardHeader({
             className="h-4 w-4 accent-black"
           />
           Auto-refresh (30s)
+        </label>
+
+        <label
+          className="flex cursor-pointer items-center gap-2 text-sm text-secondary"
+          title="When on, any tablet found off Office Optimizer is automatically reloaded back onto it. Uncheck to override and stop the automatic relaunch."
+        >
+          <input
+            type="checkbox"
+            checked={autoRelaunch}
+            onChange={onToggleAutoRelaunch}
+            className="h-4 w-4 accent-black"
+          />
+          <span className={`dot dot-${autoRelaunch ? 'success' : 'neutral'}`} />
+          Auto-relaunch Office Optimizer
         </label>
 
         <div className="ml-auto flex flex-wrap gap-2">

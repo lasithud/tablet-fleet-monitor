@@ -62,6 +62,7 @@ app.get('/api/public-config', (_req, res) => res.json({ authRequired: authEnable
 // ---------------------------------------------------------------------------
 app.use('/api/devices', requireAuth);
 app.use('/api/agent', requireAuth);
+app.use('/api/auto-relaunch', requireAuth);
 
 // ---------------------------------------------------------------------------
 // REST API
@@ -82,7 +83,15 @@ app.get('/api/devices', (_req, res) => {
     devices: deviceManager.getAll(),
     targetApp: deviceManager.targetApp,
     pollIntervalSeconds: deviceManager.pollIntervalSeconds,
+    autoRelaunch: deviceManager.autoRelaunch,
   });
+});
+
+// POST /api/auto-relaunch — enable/disable the auto-relaunch watchdog.
+// Body: { enabled: boolean }
+app.post('/api/auto-relaunch', (req, res) => {
+  const enabled = !!(req.body && req.body.enabled);
+  res.json({ autoRelaunch: deviceManager.setAutoRelaunch(enabled) });
 });
 
 // GET /api/devices/:id/status — refresh status for one device
@@ -231,6 +240,7 @@ deviceManager.on('device:status', (d) => broadcast('device:status', d));
 deviceManager.on('device:connected', (d) => broadcast('device:connected', d));
 deviceManager.on('device:disconnected', (d) => broadcast('device:disconnected', d));
 deviceManager.on('adb:log', (line) => broadcast('adb:log', line));
+deviceManager.on('autoRelaunch', (enabled) => broadcast('autoRelaunch', enabled));
 
 wss.on('connection', (ws, req) => {
   // Reject dashboards that didn't present a valid token (?token=...).

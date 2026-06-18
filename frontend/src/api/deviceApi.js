@@ -74,4 +74,11 @@ export const deviceApi = {
       method: 'POST',
       body: JSON.stringify({ level }),
     }),
+
+  // Toggle the auto-relaunch watchdog (keeps tablets pinned to the kiosk app)
+  setAutoRelaunch: (enabled) =>
+    request('/api/auto-relaunch', {
+      method: 'POST',
+      body: JSON.stringify({ enabled }),
+    }),
 };

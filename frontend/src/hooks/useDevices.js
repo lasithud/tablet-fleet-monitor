@@ -41,6 +41,11 @@ export function useDeviceActions() {
 
   const refetch = () => qc.invalidateQueries({ queryKey: DEVICES_KEY });
 
+  // Merge the fleet-wide auto-relaunch flag into the cached payload.
+  const patchAutoRelaunch = (enabled) => {
+    qc.setQueryData(DEVICES_KEY, (old) => (old ? { ...old, autoRelaunch: enabled } : old));
+  };
+
   const connect = useMutation({
     mutationFn: deviceApi.connect,
     onSuccess: (res) => patchDevice(res.device),
@@ -92,8 +97,14 @@ export function useDeviceActions() {
     onSettled: refetch,
   });
 
+  const setAutoRelaunch = useMutation({
+    mutationFn: (enabled) => deviceApi.setAutoRelaunch(enabled),
+    onSuccess: (res) => patchAutoRelaunch(res.autoRelaunch),
+  });
+
   return {
     patchDevice,
+    patchAutoRelaunch,
     refetch,
     connect,
     refresh,
@@ -106,5 +117,6 @@ export function useDeviceActions() {
     launchKioskAll,
     exitKioskAll,
     setBrightnessAll,
+    setAutoRelaunch,
   };
 }

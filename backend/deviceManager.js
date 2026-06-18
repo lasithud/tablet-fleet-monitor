@@ -7,6 +7,11 @@ const adb = require('./adb');
 
 const CONFIG_PATH = path.join(__dirname, 'devices.json');
 
+// When auto-relaunch is on and a device is reported off the kiosk app, we
+// enqueue a launchFully — but no more often than this per device, so a slow
+// relaunch (or a stuck app) doesn't flood the command queue.
+const AUTO_RELAUNCH_COOLDOWN_MS = 25000;
+
 /**
  * Owns the in-memory fleet state and all device operations.
  *
@@ -22,6 +27,12 @@ class DeviceManager extends EventEmitter {
     this.config = this._loadConfig();
     this.scrcpyProcs = new Map(); // id -> ChildProcess
     this.commandQueues = new Map(); // id -> string[]  (commands awaiting the agent)
+
+    // Auto-relaunch: keep tablets pinned to the kiosk app. Enabled by default;
+    // the dashboard can toggle it off as a manual override. In-memory state
+    // (resets to the config default on restart/redeploy).
+    this.autoRelaunch = this.config.autoRelaunch !== false;
+    this._lastAutoRelaunch = new Map(); // id -> last relaunch timestamp (ms)
 
     // Build the live status map from config. A "device" here is config + runtime status.
     this.devices = new Map();
@@ -161,12 +172,14 @@ class DeviceManager extends EventEmitter {
     // Prefer the agent's foreground app; fall back to adb's when no heartbeat.
     const fg = hbFresh ? dev.foregroundApp : adbFg;
 
-    return this._update(id, {
+    const updated = this._update(id, {
       online,
       adbConnected: adbResponsive,
       foregroundApp: online ? fg : null,
       isOnKiosk: online ? fg === this.targetApp : false,
     });
+    this._maybeAutoRelaunch(updated);
+    return updated;
   }
 
   /**
@@ -182,7 +195,7 @@ class DeviceManager extends EventEmitter {
     if (!dev) return null;
 
     const fg = data.foregroundApp || null;
-    return this._update(id, {
+    const updated = this._update(id, {
       online: true,
       foregroundApp: fg,
       isOnKiosk: fg === this.targetApp,
@@ -195,6 +208,34 @@ class DeviceManager extends EventEmitter {
           : dev.brightness,
       lastHeartbeat: new Date().toISOString(),
     });
+    this._maybeAutoRelaunch(updated);
+    return updated;
+  }
+
+  /**
+   * If auto-relaunch is on and this device is online but sitting on something
+   * other than the kiosk app, queue a launchFully to bring it back — throttled
+   * per device by AUTO_RELAUNCH_COOLDOWN_MS.
+   */
+  _maybeAutoRelaunch(dev) {
+    if (!this.autoRelaunch || !dev) return;
+    if (!dev.online || !dev.foregroundApp) return; // unknown state — don't act
+    if (dev.foregroundApp === this.targetApp) return; // already on kiosk
+
+    const now = Date.now();
+    if (now - (this._lastAutoRelaunch.get(dev.id) || 0) < AUTO_RELAUNCH_COOLDOWN_MS) return;
+    this._lastAutoRelaunch.set(dev.id, now);
+
+    this.enqueueCommand(dev.id, 'launchFully');
+    this.emit('adb:log', `auto-relaunch: ${dev.id} on ${dev.foregroundApp} (not kiosk) → launchFully`);
+  }
+
+  /** Enable/disable the auto-relaunch watchdog (manual override from the UI). */
+  setAutoRelaunch(enabled) {
+    this.autoRelaunch = !!enabled;
+    if (!this.autoRelaunch) this._lastAutoRelaunch.clear();
+    this.emit('autoRelaunch', this.autoRelaunch);
+    return this.autoRelaunch;
   }
 
   /** Queue a command for a device's agent to pick up on its next poll. */
