@@ -44,13 +44,13 @@ function RoomTile({ device }) {
         <span className="truncate text-sm font-semibold text-strong">{label}</span>
       </div>
       {busy ? (
-        <p className="truncate text-xs text-secondary">
+        <p className="text-xs text-secondary break-words">
           <span className="font-medium text-strong">In use</span>
           {room.currentMeeting ? ` · ${room.currentMeeting}` : ''}
           {until ? ` · until ${until}` : ''}
         </p>
       ) : (
-        <p className="truncate text-xs text-secondary">
+        <p className="text-xs text-secondary break-words">
           <span className="font-medium text-strong">Available</span>
           {nextName ? ` · ${nextName}` : ''}
           {next ? ` · next at ${next}` : ''}
