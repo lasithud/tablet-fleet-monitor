@@ -30,6 +30,12 @@ function RoomTile({ device }) {
   const busy = !!room.occupied;
   const until = formatTime(room.endTime);
   const next = !busy && room.startTime ? formatTime(room.startTime) : null;
+  // The upcoming meeting's name (currentMeeting is the literal 'Available'
+  // sentinel when there's no next meeting at all).
+  const nextName =
+    !busy && room.currentMeeting && room.currentMeeting !== 'Available'
+      ? room.currentMeeting
+      : null;
 
   return (
     <div className={`room-tile ${busy ? 'room-tile--busy' : 'room-tile--available'}`}>
@@ -46,6 +52,7 @@ function RoomTile({ device }) {
       ) : (
         <p className="truncate text-xs text-secondary">
           <span className="font-medium text-strong">Available</span>
+          {nextName ? ` · ${nextName}` : ''}
           {next ? ` · next at ${next}` : ''}
         </p>
       )}
