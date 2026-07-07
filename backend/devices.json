@@ -3,36 +3,42 @@
     {
       "id": "room-1",
       "name": "Earth Room",
+      "roomKey": "earth",
       "tailscaleIp": "100.67.112.98",
       "lastKnownPort": 37013
     },
     {
       "id": "room-2",
       "name": "Fire Room",
+      "roomKey": "fire",
       "tailscaleIp": "100.69.124.124",
       "lastKnownPort": 5555
     },
     {
       "id": "room-3",
       "name": "Main Boardroom",
+      "roomKey": "boardroom",
       "tailscaleIp": "100.x.x.x",
       "lastKnownPort": null
     },
     {
       "id": "room-4",
       "name": "Pod Air Room",
+      "roomKey": "air",
       "tailscaleIp": "100.x.x.x",
       "lastKnownPort": null
     },
     {
       "id": "room-5",
       "name": "Spirit Room",
+      "roomKey": "spirit",
       "tailscaleIp": "100.119.152.12",
       "lastKnownPort": null
     },
     {
       "id": "room-6",
       "name": "Pod Water Room",
+      "roomKey": "water",
       "tailscaleIp": "100.x.x.x",
       "lastKnownPort": null
     }

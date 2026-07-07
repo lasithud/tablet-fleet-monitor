@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import DashboardHeader from './components/DashboardHeader';
 import DeviceGrid from './components/DeviceGrid';
+import RoomOverview from './components/RoomOverview';
 import ActionCenter from './components/ActionCenter';
 import { ToastProvider, useToast } from './components/Toaster';
 import { useDevices, useDeviceActions } from './hooks/useDevices';
@@ -174,6 +175,8 @@ function Dashboard() {
         onBrightness70={handleBrightness70}
         busy={busy}
       />
+
+      {!isLoading && !error && <RoomOverview devices={devices} optimizer={data?.optimizer} />}
 
       {!isLoading && !error && <ActionCenter devices={devices} actions={actions} />}
 

@@ -40,6 +40,7 @@ class DeviceManager extends EventEmitter {
       this.devices.set(d.id, {
         id: d.id,
         name: d.name,
+        roomKey: d.roomKey || null,
         tailscaleIp: d.tailscaleIp,
         adbPort: d.lastKnownPort || null,
         adbConnected: false,

@@ -6,6 +6,7 @@ const path = require('path');
 const fs = require('fs');
 const { WebSocketServer } = require('ws');
 const deviceManager = require('./deviceManager');
+const roomStatus = require('./roomStatus');
 const { authEnabled, requireAuth, wsTokenValid } = require('./auth');
 
 // Built React dashboard (vite build output). Served from the same origin as the
@@ -77,13 +78,20 @@ app.get('/agent.apk', (_req, res) => {
   res.download(apk, 'fleet-agent.apk');
 });
 
-// GET /api/devices — config + current status of all devices
+// GET /api/devices — config + current status of all devices, each enriched with
+// its live meeting-room availability (from the Office-Room-Optimizer) so the
+// dashboard can show which rooms are free at a glance.
 app.get('/api/devices', (_req, res) => {
+  const devices = deviceManager.getAll().map((d) => ({
+    ...d,
+    room: roomStatus.get(d.roomKey),
+  }));
   res.json({
-    devices: deviceManager.getAll(),
+    devices,
     targetApp: deviceManager.targetApp,
     pollIntervalSeconds: deviceManager.pollIntervalSeconds,
     autoRelaunch: deviceManager.autoRelaunch,
+    optimizer: roomStatus.status(),
   });
 });
 
@@ -279,6 +287,12 @@ server.listen(PORT, () => {
   // Begin status polling immediately so offline detection isn't delayed by the
   // (potentially slow) startup adb connect/scan.
   startPolling();
+
+  // Start pulling live meeting-room availability from the Office-Room-Optimizer.
+  roomStatus.start();
+  console.log(
+    `[fleet-monitor] room availability source: ${roomStatus.OPTIMIZER_URL || 'DISABLED (set OPTIMIZER_URL)'}`
+  );
 
   // Attempt to connect adb-managed devices in the background (best effort).
   deviceManager

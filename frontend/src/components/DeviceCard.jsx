@@ -50,8 +50,21 @@ export default function DeviceCard({ device, actions }) {
 
       <AppStatusBadge device={device} />
 
-      {/* Compact details — App, Battery+power on one line, last seen */}
+      {/* Compact details — Room availability, App, Battery+power, last seen */}
       <dl className="kv">
+        {device.room && (
+          <>
+            <dt>Room</dt>
+            <dd>
+              <span className={`dot dot-${device.room.occupied ? 'error' : 'success'}`} />
+              {device.room.occupied ? 'In use' : 'Available'}
+              {device.room.occupied && device.room.currentMeeting
+                ? ` · ${device.room.currentMeeting}`
+                : ''}
+            </dd>
+          </>
+        )}
+
         <dt>App</dt>
         <dd className={wrongApp ? 'font-medium text-strong' : ''}>{appLabel(device.foregroundApp)}</dd>
 

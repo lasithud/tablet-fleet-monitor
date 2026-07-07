@@ -118,6 +118,13 @@ body {
   border-radius: var(--radius-lg); box-shadow: var(--shadow-sm);
 }
 
+/* ─── Room availability tile (Meeting Rooms overview) ───────────────── */
+.room-tile {
+  display: flex; flex-direction: column; gap: 3px;
+  border: 1px solid var(--border); border-radius: var(--radius-md);
+  padding: 10px 12px; min-width: 0;
+}
+
 /* ─── Page header (dark block) ──────────────────────────────────────── */
 .page-header {
   background: var(--gray-900); border-radius: var(--radius-lg);
