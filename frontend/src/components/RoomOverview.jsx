@@ -17,7 +17,7 @@ function RoomTile({ device }) {
   // No availability data (Optimizer unreachable, or room not mapped yet).
   if (!room) {
     return (
-      <div className="room-tile">
+      <div className="room-tile room-tile--unknown">
         <div className="flex items-center gap-2">
           <span className="dot dot-neutral" />
           <span className="truncate text-sm font-semibold text-strong">{label}</span>
@@ -32,7 +32,7 @@ function RoomTile({ device }) {
   const next = !busy && room.startTime ? formatTime(room.startTime) : null;
 
   return (
-    <div className="room-tile">
+    <div className={`room-tile ${busy ? 'room-tile--busy' : 'room-tile--available'}`}>
       <div className="flex items-center gap-2">
         <span className={`dot dot-${busy ? 'error' : 'success'}`} />
         <span className="truncate text-sm font-semibold text-strong">{label}</span>

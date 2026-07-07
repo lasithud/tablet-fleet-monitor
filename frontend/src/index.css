@@ -124,6 +124,19 @@ body {
   border: 1px solid var(--border); border-radius: var(--radius-md);
   padding: 10px 12px; min-width: 0;
 }
+/* Status-tinted backgrounds so free/busy rooms read at a glance. Tints are
+   derived from the status tokens so they stay in sync with the dots. */
+.room-tile--available {
+  background: color-mix(in srgb, var(--dot-success) 10%, var(--bg));
+  border-color: color-mix(in srgb, var(--dot-success) 35%, var(--border));
+}
+.room-tile--busy {
+  background: color-mix(in srgb, var(--dot-error) 10%, var(--bg));
+  border-color: color-mix(in srgb, var(--dot-error) 35%, var(--border));
+}
+.room-tile--unknown {
+  background: var(--gray-50);
+}
 
 /* ─── Page header (dark block) ──────────────────────────────────────── */
 .page-header {
