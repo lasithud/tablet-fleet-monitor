@@ -32,6 +32,12 @@ function Dashboard() {
       actions.patchAutoRelaunch(evt.payload);
       return;
     }
+    if (evt.type === 'room:status') {
+      // Live meeting-room availability pushed from the backend — update in place
+      // so the dashboard stays current without a page refresh.
+      actions.patchRooms(evt.payload?.rooms, evt.payload?.optimizer);
+      return;
+    }
     if (evt.type !== 'device:status') return;
     const d = evt.payload;
     actions.patchDevice(d);

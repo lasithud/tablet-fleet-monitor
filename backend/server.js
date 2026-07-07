@@ -250,6 +250,12 @@ deviceManager.on('device:disconnected', (d) => broadcast('device:disconnected', 
 deviceManager.on('adb:log', (line) => broadcast('adb:log', line));
 deviceManager.on('autoRelaunch', (enabled) => broadcast('autoRelaunch', enabled));
 
+// Push live meeting-room availability to dashboards the moment we refresh it,
+// so rooms update in real time instead of waiting on the browser's own poll.
+roomStatus.emitter.on('update', () =>
+  broadcast('room:status', { rooms: roomStatus.getAll(), optimizer: roomStatus.status() })
+);
+
 wss.on('connection', (ws, req) => {
   // Reject dashboards that didn't present a valid token (?token=...).
   if (!wsTokenValid(req)) {
@@ -261,6 +267,15 @@ wss.on('connection', (ws, req) => {
     JSON.stringify({
       type: 'snapshot',
       payload: deviceManager.getAll(),
+      ts: new Date().toISOString(),
+    })
+  );
+  // ...and the latest room availability, so a freshly-loaded dashboard shows
+  // current room status without waiting for the next poll cycle.
+  ws.send(
+    JSON.stringify({
+      type: 'room:status',
+      payload: { rooms: roomStatus.getAll(), optimizer: roomStatus.status() },
       ts: new Date().toISOString(),
     })
   );
