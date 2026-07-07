@@ -46,6 +46,22 @@ export function useDeviceActions() {
     qc.setQueryData(DEVICES_KEY, (old) => (old ? { ...old, autoRelaunch: enabled } : old));
   };
 
+  // Merge pushed room availability (by roomKey) into each device, plus the
+  // Optimizer diagnostics. Lets the WebSocket keep rooms live without a refetch.
+  const patchRooms = (rooms, optimizer) => {
+    const byKey = new Map((rooms || []).map((r) => [r.roomKey, r]));
+    qc.setQueryData(DEVICES_KEY, (old) => {
+      if (!old) return old;
+      return {
+        ...old,
+        optimizer: optimizer ?? old.optimizer,
+        devices: old.devices.map((d) =>
+          d.roomKey && byKey.has(d.roomKey) ? { ...d, room: byKey.get(d.roomKey) } : d
+        ),
+      };
+    });
+  };
+
   const connect = useMutation({
     mutationFn: deviceApi.connect,
     onSuccess: (res) => patchDevice(res.device),
@@ -105,6 +121,7 @@ export function useDeviceActions() {
   return {
     patchDevice,
     patchAutoRelaunch,
+    patchRooms,
     refetch,
     connect,
     refresh,
