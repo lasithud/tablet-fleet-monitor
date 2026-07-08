@@ -68,7 +68,7 @@ function RoomTile({ device }) {
             <span className="font-medium text-strong">Available</span>
           </p>
           {nextWhen && (
-            <p className="text-xs text-muted break-words">
+            <p className="text-xs text-secondary break-words">
               Next: {nextName ? `${nextName} · ` : ''}
               {nextWhen}
             </p>
