@@ -2,11 +2,21 @@
 // and merged onto each device by the backend (device.room). Sits at the top of
 // the dashboard so opening it immediately answers "which rooms are free?".
 
-function formatTime(iso) {
+// Day-aware time: shows just the time for today, but prefixes the day
+// (tomorrow / weekday / date) when it's not today, so a meeting days away
+// isn't mistaken for one happening now.
+function formatWhen(iso) {
   if (!iso) return null;
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return null;
-  return d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+  const time = d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+  const startOfDay = (x) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
+  const dayDiff = Math.round((startOfDay(d) - startOfDay(new Date())) / 86400000);
+  if (dayDiff === 0) return time;
+  if (dayDiff === 1) return `tomorrow ${time}`;
+  if (dayDiff === -1) return `yesterday ${time}`;
+  if (dayDiff > 1 && dayDiff < 7) return `${d.toLocaleDateString([], { weekday: 'short' })} ${time}`;
+  return `${d.toLocaleDateString([], { month: 'short', day: 'numeric' })} ${time}`;
 }
 
 /** One room tile: green when free, red when in use. */
@@ -28,8 +38,8 @@ function RoomTile({ device }) {
   }
 
   const busy = !!room.occupied;
-  const until = formatTime(room.endTime);
-  const next = !busy && room.startTime ? formatTime(room.startTime) : null;
+  const until = formatWhen(room.endTime);
+  const nextWhen = !busy && room.startTime ? formatWhen(room.startTime) : null;
   // The upcoming meeting's name (currentMeeting is the literal 'Available'
   // sentinel when there's no next meeting at all).
   const nextName =
@@ -50,11 +60,20 @@ function RoomTile({ device }) {
           {until ? ` · until ${until}` : ''}
         </p>
       ) : (
-        <p className="text-xs text-secondary break-words">
-          <span className="font-medium text-strong">Available</span>
-          {nextName ? ` · ${nextName}` : ''}
-          {next ? ` · next at ${next}` : ''}
-        </p>
+        // Availability status and the next meeting are kept on separate lines
+        // (status bold, next meeting muted) so "Available" is never mistaken
+        // for an in-progress meeting.
+        <>
+          <p className="text-xs">
+            <span className="font-medium text-strong">Available</span>
+          </p>
+          {nextWhen && (
+            <p className="text-xs text-muted break-words">
+              Next: {nextName ? `${nextName} · ` : ''}
+              {nextWhen}
+            </p>
+          )}
+        </>
       )}
     </div>
   );
