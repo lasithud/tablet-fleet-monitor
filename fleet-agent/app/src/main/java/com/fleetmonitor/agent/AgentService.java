@@ -4,9 +4,11 @@ import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.Service;
+import android.app.admin.DevicePolicyManager;
 import android.app.usage.UsageEvents;
 import android.app.usage.UsageStats;
 import android.app.usage.UsageStatsManager;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -196,6 +198,8 @@ public class AgentService extends Service {
                     wakeScreen();
                 } else if ("exitKiosk".equals(cmd)) {
                     goHome();
+                } else if ("lockScreen".equals(cmd)) {
+                    lockScreen();
                 } else if (cmd.startsWith("brightness:")) {
                     try {
                         setBrightness(Integer.parseInt(cmd.substring("brightness:".length())));
@@ -209,6 +213,29 @@ public class AgentService extends Service {
             forceHeartbeat = true;
         } catch (Exception e) {
             Log.w(TAG, "could not parse commands: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Lock the screen (and turn it off) via Device Admin. Requires
+     * {@link LockAdminReceiver} to be an active device admin — granted from the
+     * setup screen or remotely with
+     * {@code adb shell dpm set-active-admin com.fleetmonitor.agent/.LockAdminReceiver}.
+     * No-ops with a warning if admin isn't active.
+     */
+    private void lockScreen() {
+        try {
+            DevicePolicyManager dpm =
+                    (DevicePolicyManager) getSystemService(Context.DEVICE_POLICY_SERVICE);
+            ComponentName admin = new ComponentName(this, LockAdminReceiver.class);
+            if (dpm != null && dpm.isAdminActive(admin)) {
+                dpm.lockNow();
+                Log.i(TAG, "lockScreen: device locked");
+            } else {
+                Log.w(TAG, "lockScreen: device admin not active — cannot lock");
+            }
+        } catch (Exception e) {
+            Log.w(TAG, "lockScreen failed: " + e.getMessage());
         }
     }
 

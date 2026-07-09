@@ -69,6 +69,9 @@ export const deviceApi = {
   connectAll: () => request('/api/devices/connect-all', { method: 'POST' }),
   launchKioskAll: () => request('/api/devices/launch-kiosk-all', { method: 'POST' }),
   exitKioskAll: () => request('/api/devices/exit-kiosk-all', { method: 'POST' }),
+
+  // Lock the screen on all online devices (weekend rest)
+  lockScreenAll: () => request('/api/devices/lock-screen-all', { method: 'POST' }),
   setBrightnessAll: (level = 70) =>
     request('/api/devices/brightness-all', {
       method: 'POST',

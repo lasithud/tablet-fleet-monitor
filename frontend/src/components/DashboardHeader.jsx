@@ -23,6 +23,7 @@ export default function DashboardHeader({
   onRefreshAll,
   onLaunchKioskAll,
   onKillAll,
+  onLockAll,
   onBrightness70,
   busy,
 }) {
@@ -86,6 +87,15 @@ export default function DashboardHeader({
           <button type="button" className="btn btn-secondary btn-sm" onClick={onKillAll} disabled={busy}>
             <span className="dot dot-error" />
             Kill All
+          </button>
+          <button
+            type="button"
+            className="btn btn-soft btn-sm"
+            onClick={onLockAll}
+            disabled={busy}
+            title="Lock the screen on all tablets and let them rest (e.g. over the weekend)"
+          >
+            <span aria-hidden>💤</span> Rest for Weekend
           </button>
           <button type="button" className="btn btn-primary btn-sm" onClick={onLaunchKioskAll} disabled={busy}>
             Launch Office Optimizer on All

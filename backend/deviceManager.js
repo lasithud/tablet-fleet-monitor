@@ -354,6 +354,20 @@ class DeviceManager extends EventEmitter {
     return { ok: true, count: ids.length, ids };
   }
 
+  /**
+   * Lock the screen on every online device — the "weekend rest" action. Queues
+   * a `lockScreen` command the FleetAgent executes via Device Admin (lockNow),
+   * turning off and locking each tablet's screen. Devices without the agent's
+   * device-admin active will ignore it (logged agent-side).
+   */
+  lockScreenAll() {
+    const ids = this.getAll()
+      .filter((d) => d.online)
+      .map((d) => d.id);
+    ids.forEach((id) => this.enqueueCommand(id, 'lockScreen'));
+    return { ok: true, count: ids.length, ids };
+  }
+
   /** Force-stop the current foreground app on a device. */
   async killForeground(id) {
     const dev = this.devices.get(id);
