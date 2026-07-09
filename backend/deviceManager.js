@@ -355,16 +355,24 @@ class DeviceManager extends EventEmitter {
   }
 
   /**
-   * Lock the screen on every online device — the "weekend rest" action. Queues
-   * a `lockScreen` command the FleetAgent executes via Device Admin (lockNow),
-   * turning off and locking each tablet's screen. Devices without the agent's
-   * device-admin active will ignore it (logged agent-side).
+   * Put every online device to rest — the "weekend rest" action.
+   *
+   * Sends two commands so it works over the existing cloud channel with no
+   * reinstall, and upgrades automatically as agents are updated:
+   *   - `lockScreen`  → agents with device-admin active do a true hardware
+   *                     lock (screen off + locked). Older agents ignore it.
+   *   - `brightness:0`→ every current agent already honors this, dimming the
+   *                     screen to black so un-updated tablets still "rest".
+   * Restore on Monday with Launch Office Optimizer / Set 70% Brightness.
    */
   lockScreenAll() {
     const ids = this.getAll()
       .filter((d) => d.online)
       .map((d) => d.id);
-    ids.forEach((id) => this.enqueueCommand(id, 'lockScreen'));
+    ids.forEach((id) => {
+      this.enqueueCommand(id, 'lockScreen');
+      this.enqueueCommand(id, 'brightness:0');
+    });
     return { ok: true, count: ids.length, ids };
   }
 
