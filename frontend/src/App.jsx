@@ -170,16 +170,16 @@ function Dashboard() {
   const handleLockAll = async () => {
     if (
       !window.confirm(
-        'Lock the screen on all online tablets for the weekend? Each will lock and turn its screen off until woken.'
+        'Put all online tablets to rest for the weekend? Updated tablets lock their screen; the rest dim to black. Reversible with Launch / Set 70% Brightness.'
       )
     ) {
       return;
     }
     try {
       const r = await actions.lockScreenAll.mutateAsync();
-      toast(`Locking ${r.count} tablet(s) for the weekend 💤`, 'success');
+      toast(`Resting ${r.count} tablet(s) for the weekend 💤`, 'success');
     } catch (e) {
-      toast(`Lock all failed: ${e.message}`, 'error');
+      toast(`Rest all failed: ${e.message}`, 'error');
     }
   };
 
