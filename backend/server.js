@@ -175,6 +175,12 @@ app.post('/api/devices/exit-kiosk-all', (_req, res) => {
   res.json(deviceManager.exitKioskAll());
 });
 
+// POST /api/devices/lock-screen-all — lock the screen on all online devices
+// (the "weekend rest" action). Agents lock via Device Admin.
+app.post('/api/devices/lock-screen-all', (_req, res) => {
+  res.json(deviceManager.lockScreenAll());
+});
+
 // POST /api/devices/brightness-all — set brightness on all online devices (default 70)
 app.post('/api/devices/brightness-all', (req, res) => {
   const level = req.body && req.body.level != null ? req.body.level : 70;

@@ -70,5 +70,20 @@
                 <action android:name="android.intent.action.LOCKED_BOOT_COMPLETED" />
             </intent-filter>
         </receiver>
+
+        <!-- Device admin used only to lock/turn off the screen (lockNow) for the
+             "Rest for Weekend" action. Enable via the setup screen or
+             `adb shell dpm set-active-admin com.fleetmonitor.agent/.LockAdminReceiver`. -->
+        <receiver
+            android:name=".LockAdminReceiver"
+            android:permission="android.permission.BIND_DEVICE_ADMIN"
+            android:exported="true">
+            <meta-data
+                android:name="android.app.device_admin"
+                android:resource="@xml/device_admin" />
+            <intent-filter>
+                <action android:name="android.app.action.DEVICE_ADMIN_ENABLED" />
+            </intent-filter>
+        </receiver>
     </application>
 </manifest>

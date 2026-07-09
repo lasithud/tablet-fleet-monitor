@@ -108,6 +108,11 @@ export function useDeviceActions() {
     onSettled: refetch,
   });
 
+  const lockScreenAll = useMutation({
+    mutationFn: deviceApi.lockScreenAll,
+    onSettled: refetch,
+  });
+
   const setBrightnessAll = useMutation({
     mutationFn: (level) => deviceApi.setBrightnessAll(level),
     onSettled: refetch,
@@ -133,6 +138,7 @@ export function useDeviceActions() {
     connectAll,
     launchKioskAll,
     exitKioskAll,
+    lockScreenAll,
     setBrightnessAll,
     setAutoRelaunch,
   };

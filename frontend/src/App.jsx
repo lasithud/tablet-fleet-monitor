@@ -105,6 +105,7 @@ function Dashboard() {
     actions.connectAll.isPending ||
     actions.launchKioskAll.isPending ||
     actions.exitKioskAll.isPending ||
+    actions.lockScreenAll.isPending ||
     actions.setBrightnessAll.isPending ||
     actions.refetch.isPending;
 
@@ -166,6 +167,22 @@ function Dashboard() {
     }
   };
 
+  const handleLockAll = async () => {
+    if (
+      !window.confirm(
+        'Lock the screen on all online tablets for the weekend? Each will lock and turn its screen off until woken.'
+      )
+    ) {
+      return;
+    }
+    try {
+      const r = await actions.lockScreenAll.mutateAsync();
+      toast(`Locking ${r.count} tablet(s) for the weekend 💤`, 'success');
+    } catch (e) {
+      toast(`Lock all failed: ${e.message}`, 'error');
+    }
+  };
+
   return (
     <div className="mx-auto max-w-6xl space-y-3 p-4">
       <DashboardHeader
@@ -178,6 +195,7 @@ function Dashboard() {
         onRefreshAll={handleRefreshAll}
         onLaunchKioskAll={handleLaunchKioskAll}
         onKillAll={handleKillAll}
+        onLockAll={handleLockAll}
         onBrightness70={handleBrightness70}
         busy={busy}
       />
