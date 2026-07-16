@@ -1,0 +1,24 @@
+# Render blueprint for the Tablet Fleet Monitor (backend serves the built
+# React dashboard + REST API + the /ws WebSocket from one Node process).
+# Deploy: Render dashboard → New + → Blueprint → pick this repo, or via the
+# Render API. Set FLEET_TOKEN in the dashboard (it's a secret, not committed).
+services:
+  - type: web
+    name: tablet-fleet-monitor
+    runtime: node
+    plan: free
+    region: singapore
+    # `npm install` runs the postinstall (frontend deps); `npm run build`
+    # produces frontend/dist, which the backend serves.
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    healthCheckPath: /
+    autoDeploy: true
+    envVars:
+      # Live meeting-room availability source (public URL, not a secret).
+      - key: OPTIMIZER_URL
+        value: https://office-room-optimizer.onrender.com
+      # Shared access token for the dashboard + agents. Secret — set this to
+      # your token (e.g. @ltrium22) in the Render dashboard. Render injects PORT.
+      - key: FLEET_TOKEN
+        sync: false
